@@ -26,12 +26,15 @@ class ImageParams {
   /// If an image need to be painted only on left or right to the path, set this parameter.
   final Side side;
 
+  final void Function(int)? onTap;
+
   ImageParams({
     required this.path,
     required this.size,
     this.imagePositionFactor = 0.4,
     this.repeatCountPerLevel = 0.5,
     this.side = Side.BOTH,
+    this.onTap,
   })  : assert(imagePositionFactor >= 0 && imagePositionFactor <= 1,
             "Image Position factor should be between 0 and 1"),
         assert(repeatCountPerLevel >= 0,

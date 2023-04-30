@@ -11,6 +11,9 @@ class LevelMapPainter extends CustomPainter {
   final Paint _pathPaint;
   final Paint _shadowPaint;
 
+  final tapOffsets = <int, Rect>{};
+  late Size canvasSize;
+
   /// Describes the fraction to reach next level.
   /// If the [LevelMapParams.currentLevel] is 6.5, [_nextLevelFraction] is 0.5.
   final double _nextLevelFraction;
@@ -29,6 +32,7 @@ class LevelMapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvasSize = size;
     canvas.save();
     canvas.translate(0, size.height);
 
@@ -143,7 +147,7 @@ class LevelMapPainter extends CustomPainter {
         imageDetails = imagesToPaint!.lockedLevelImage;
       }
       _paintImage(canvas, imageDetails,
-          _offsetToPaintImage.toBottomCenter(imageDetails.size));
+          _offsetToPaintImage.toBottomCenter(imageDetails.size), thisLevel - 1);
       final double _curveFraction;
       final int _flooredCurrentLevel = params.currentLevel.floor();
       if (_flooredCurrentLevel == thisLevel && _nextLevelFraction <= 0.5) {
@@ -163,17 +167,37 @@ class LevelMapPainter extends CustomPainter {
     }
   }
 
-  void _paintImage(Canvas canvas, ImageDetails imageDetails, Offset offset) {
-    paintImage(
-        canvas: canvas,
-        rect: Rect.fromLTWH(offset.dx, offset.dy, imageDetails.size.width,
-            imageDetails.size.height),
-        image: imageDetails.imageInfo.image);
+  void _paintImage(
+    Canvas canvas,
+    ImageDetails imageDetails,
+    Offset offset, [
+    int? level,
+  ]) {
+    final rect = Rect.fromLTWH(offset.dx, offset.dy, imageDetails.size.width,
+        imageDetails.size.height);
+    if (level != null) {
+      tapOffsets[level] = rect;
+    }
+    paintImage(canvas: canvas, rect: rect, image: imageDetails.imageInfo.image);
   }
 
   double _compute(double t, double p1, double p2, double p3) {
     ///To learn about these parameters, visit https://en.wikipedia.org/wiki/B%C3%A9zier_curve
     return (((1 - t) * (1 - t) * p1) + (2 * (1 - t) * t * p2) + (t * t) * p3);
+  }
+
+  int? isLevelTapped(Offset position) {
+    final convertedPosition = Offset(
+      position.dx,
+      (canvasSize.height - position.dy) * -1,
+    );
+    for (final entry in tapOffsets.entries) {
+      final rect = entry.value;
+      if (rect.contains(convertedPosition)) {
+        return entry.key;
+      }
+    }
+    return null;
   }
 
   @override
